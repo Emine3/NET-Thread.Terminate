@@ -1,3 +1,4 @@
+[![NuGet](https://img.shields.io/nuget/v/NET.Thread.Terminate.svg)](https://www.nuget.org/packages/NET-Thread.Terminate)
 ## Introduction
 .NET Thread.Terminate lets you terminate any managed threads on both .NET and .NET Framework on an OS level (TerminateThread) by adding an extension method Thread.Terminate to the BCL class Thread; it also restores the .NET Framework style of thread abortion (Thread.Abort) on modern .NET versions. ".NET Thread.Terminate" is a partial implementation of a bigger project [Untitled](https://github.com/Emine3/Untitled) under development.
 
@@ -19,7 +20,7 @@ The thread's handle is assigned to the field "m_ThreadHandleForClose" which pres
 
 
 ## Installation
-The best way to use .NET Thread.Terminate is by installing its NuGet package;
+The best way to use .NET Thread.Terminate is by installing its [NuGet package](https://www.nuget.org/packages/NET-Thread.Terminate/);
 the easiest way to do that is using Visual Studio's package manager and search for ".NET Thread.Terminate".
 
 You can also install the NuGet package by using the dotnet CLI:
