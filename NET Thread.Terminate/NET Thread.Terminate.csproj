@@ -11,18 +11,21 @@
     <Authors>Emine3</Authors>
     <Company>$(Authors)</Company>
     <Product>Untitled</Product>
-    <Description>.NET Thread.Terminate lets you terminate any managed threads on both .NET and .NET Framework on an OS level (TerminateThread) by adding an extension method Thread.Terminate to the BCL class Thread; it also restores the .NET Framework style of thread abortion (Thread.Abort) on modern .NET versions.</Description>
+    <Description>".NET Thread.Terminate" is a partial implementation of a bigger project [Untitled](https://github.com/Emine3/Untitled) under development. It offers capability to perform native operations such as termination on any managed threads on both .NET and .NET Framework. This project serves as a proof of concept demonstrating the power of the upcoming project.</Description>
     <Copyright>https://github.com/Emine3/</Copyright>
     <PackageProjectUrl>https://github.com/Emine3/NET-Thread.Terminate/</PackageProjectUrl>
-    <PackageIcon></PackageIcon>
-    <PackageReadmeFile></PackageReadmeFile>
+    <PackageIcon>Thread.Terminate Icon.png</PackageIcon>
+    <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/Emine3/NET-Thread.Terminate/</RepositoryUrl>
     <PackageTags>Thread; Threading; Multithreading; Internals; CLR; Thread.Abort</PackageTags>
     <AssemblyVersion></AssemblyVersion>
     <FileVersion></FileVersion>
-    <Version>1.0.1</Version>
-    <PackageReleaseNotes>Corrected .NET 11 field offests.</PackageReleaseNotes>
+    <Version>1.0.5</Version>
+    <PackageReleaseNotes>* Updated ReadMe.md to properly warn against the dangers of using vicious thread termination.
+* Marked Terminate, SuspendNative, ResumeNative, and DotNetAbort methods with the Obsolete attribute to discourage usage in production code.
+* Added extra notes regarding internal offsets</PackageReleaseNotes>
     <IncludeSymbols>False</IncludeSymbols>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -74,6 +77,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\..\..\..\Desktop\New folder\.NET Thread.Terminate\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\..\..\Desktop\New folder\.NET Thread.Terminate\ReadMe.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\..\..\Desktop\New folder\.NET Thread.Terminate\Thread.Terminate Icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="..\LICENSE.txt">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
@@ -85,6 +100,10 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
 
 </Project>

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
- 
+
 using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -46,14 +46,16 @@ namespace NativeThreadExtensions
         }
         public static DotNetPlatform GetRuntimeVersion()
         {
+            // a method attempting to determine the version of the runtime running in the executing assembly
+            // relevant to the neat little runtime safeguard we implemented in the class's constructor
             Assembly CurrentAssem = Assembly.GetEntryAssembly();
             if (CurrentAssem == null)
                 return 0;
-         
+
             CustomAttributeData attribute = null;
             string attributevalue;
             Version Ver1;
-       
+
             var array = CurrentAssem.GetCustomAttributes(false);
             for (int I = array.Length; I-- != 0;)
             {
@@ -69,20 +71,20 @@ Ver1 = Version.Parse(attributevalue.Substring(attributevalue.IndexOf('=', attrib
        
 #else
 
-            string[]   VersionString = attributevalue.Substring(attributevalue.IndexOf('=', attributevalue.IndexOf(",") + 1) + 1).Replace("v", "").Split('.');
+                string[] VersionString = attributevalue.Substring(attributevalue.IndexOf('=', attributevalue.IndexOf(",") + 1) + 1).Replace("v", "").Split('.');
                 if (VersionString.Length > 2)
                 {
                     Ver1 = new Version(int.Parse(VersionString[0]), int.Parse(VersionString[1]), int.Parse(VersionString[2]));
                 }
-                else if(VersionString.Length == 2)
+                else if (VersionString.Length == 2)
                 {
                     Ver1 = new Version(int.Parse(VersionString[0]), int.Parse(VersionString[1]));
                 }
                 else
                 {
-                    Ver1 = new Version(int.Parse(VersionString[0]),0);
+                    Ver1 = new Version(int.Parse(VersionString[0]), 0);
                 }
-            
+
 #endif
                 if (Ver1.Major > 4)
                 {
@@ -106,30 +108,33 @@ Ver1 = Version.Parse(attributevalue.Substring(attributevalue.IndexOf('=', attrib
             Version Ver;
             if (ImageRuntimeVersionString.Length > 2)
             {
-                  Ver = new Version(int.Parse(ImageRuntimeVersionString[0]), int.Parse(ImageRuntimeVersionString[1]), int.Parse(ImageRuntimeVersionString[2]));
+                Ver = new Version(int.Parse(ImageRuntimeVersionString[0]), int.Parse(ImageRuntimeVersionString[1]), int.Parse(ImageRuntimeVersionString[2]));
             }
             else if (ImageRuntimeVersionString.Length == 2)
             {
-                  Ver = new Version(int.Parse(ImageRuntimeVersionString[0]), int.Parse(ImageRuntimeVersionString[1]));
+                Ver = new Version(int.Parse(ImageRuntimeVersionString[0]), int.Parse(ImageRuntimeVersionString[1]));
             }
             else
             {
-                  Ver = new Version(int.Parse(ImageRuntimeVersionString[0]), 0);
+                Ver = new Version(int.Parse(ImageRuntimeVersionString[0]), 0);
             }
-     #endif   
+#endif
             if (Ver.Major != 4)
-              return DotNetPlatform.NET_Framework_2_X | DotNetPlatform.CLR_2_X;
+                return DotNetPlatform.NET_Framework_2_X | DotNetPlatform.CLR_2_X;
 
             return DotNetPlatform.CLR_4_X;
 
         }
         public static string GetRuntimeVersionString(DotNetPlatform dotNetPlatform, bool IncludeRuntimeVersion = false)
         {
+            // constructing a string representation of the returned DotNetPlatform value.
+
+            // removing the extra DotNetPlatform.CLR flags by shifting the enum.
             DotNetPlatform ExtraFlagsRemoved = (DotNetPlatform)((uint)dotNetPlatform << 27 >> 27);
 
 
             string Str = ExtraFlagsRemoved.ToString();
-            bool OlderthanNet5 = ExtraFlagsRemoved < DotNetPlatform.NET_5 ;
+            bool OlderthanNet5 = ExtraFlagsRemoved < DotNetPlatform.NET_5;
             IncludeRuntimeVersion &= OlderthanNet5;
             Str = (OlderthanNet5 ? ".NET Framework v" + Str.Substring(Str.IndexOf('_', 4)).Replace("_", ".") : "." + Str.Replace("_", " "));
             if (IncludeRuntimeVersion)
@@ -138,7 +143,7 @@ Ver1 = Version.Parse(attributevalue.Substring(attributevalue.IndexOf('=', attrib
             }
             return Str;
         }
-
+        [Obsolete("This method is preserved for advanced scenarios. Do not use without intention to change or read internal material with adequate CLR internal knowledge.")]
         public static unsafe void SetNativeThreadState(Thread instance, NETInternalThreadState InternalThreadState)
         {
 #if NET8_0_OR_GREATER
@@ -162,15 +167,23 @@ Ver1 = Version.Parse(attributevalue.Substring(attributevalue.IndexOf('=', attrib
 
             *(NETInternalThreadState*)(((byte*)*(IntPtr*)(*(byte**)&instance + 8 * sizeof(void*))) + sizeof(void*)) = InternalThreadState;
 #elif NET20_OR_GREATER
-   *(NETInternalThreadState*)(((byte*)*(IntPtr*)(*(byte**)&instance + 10 * sizeof(void*))) + sizeof(void*)) = InternalThreadState;
-   
- 
+            *(NETInternalThreadState*)(((byte*)*(IntPtr*)(*(byte**)&instance + 10 * sizeof(void*))) + sizeof(void*)) = InternalThreadState;
+
+
 #endif
 
 
         }
+        [Obsolete("This method is preserved for advanced scenarios. Do not use without intention to change or read internal material with adequate CLR internal knowledge.")]
         public static NETInternalThreadState GetNativeThreadState(Thread thread)
         {
+#if NET8_0_OR_GREATER
+            if (isAOT)
+            {
+                throw new PlatformNotSupportedException("GetNativeThreadState() isn't supported on this platform yet ):");
+            }
+
+#endif
             return thread.GetNativeThreadState();
         }
     }
@@ -178,10 +191,13 @@ Ver1 = Version.Parse(attributevalue.Substring(attributevalue.IndexOf('=', attrib
     {
         static NativeThreadExtensions()
         {
-       
+
+            // a little neat optional safeguard to check Compatibility
+
             if (!Utility.CheckCompatibilityatRuntime)
                 return;
-
+            // On NativeAOT, we do not need to check runtime compatibility since the .NET runtime version is irrelevant to the internal code regarding NativeAOT
+            // we can just skip past that
 #if NET8_0_OR_GREATER
 
             if (isAOT)
@@ -203,11 +219,11 @@ Ver1 = Version.Parse(attributevalue.Substring(attributevalue.IndexOf('=', attrib
             }
 
 #elif NET20_OR_GREATER
-    if((dotNetPlatform &  Utility.DotNetPlatform.CLR_2_X) != Utility.DotNetPlatform.CLR_2_X)
+            if ((dotNetPlatform & Utility.DotNetPlatform.CLR_2_X) != Utility.DotNetPlatform.CLR_2_X)
             {
-            throw new PlatformNotSupportedException($"This DLL was not compiled to be used on this platform {Utility.GetRuntimeVersionString(dotNetPlatform)}.\r\nIf you happen to have imported the library manually, you probably accidentally added the wrong reference for your runtime version; however, don't panic!\r\nDownload the right version suitable for your exact platform on NuGet (https://www.nuget.org/packages/NET-Thread.Terminate/) or Github (https://github.com/Emine3/NET-Thread.Terminate/).");
+                throw new PlatformNotSupportedException($"This DLL was not compiled to be used on this platform {Utility.GetRuntimeVersionString(dotNetPlatform)}.\r\nIf you happen to have imported the library manually, you probably accidentally added the wrong reference for your runtime version; however, don't panic!\r\nDownload the right version suitable for your exact platform on NuGet (https://www.nuget.org/packages/NET-Thread.Terminate/) or Github (https://github.com/Emine3/NET-Thread.Terminate/).");
             }
-            
+
 #endif
 
 #if NET11_0
@@ -306,7 +322,7 @@ Ver1 = Version.Parse(attributevalue.Substring(attributevalue.IndexOf('=', attrib
             TS_StackCrawlNeeded = 0x00200000,    // A stackcrawl is needed on this thread, such as for thread abort
                                                  // See comment for s_pWaitForStackCrawlEvent for reason.
 
-             
+
             TS_TPWorkerThread = 0x01000000,    // is this a threadpool worker thread?
 
             TS_Interruptible = 0x02000000,    // sitting in a Sleep(), Wait(), Join()
@@ -330,6 +346,8 @@ Ver1 = Version.Parse(attributevalue.Substring(attributevalue.IndexOf('=', attrib
             TS_CatchAtSafePoint = (TS_AbortRequested | TS_GCSuspendPending |
                                    TS_DebugSuspendPending | TS_GCOnTransitions),
         };
+        // NativeAOT is offered starting with .NET 8; here checking System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeCompiled
+        // to determine whether the application is compiled on AOT or not by checking dynamic method features available
 #if NET8_0_OR_GREATER
         public static readonly bool isAOT = !System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeCompiled;
 #endif
@@ -349,13 +367,16 @@ IntPtr hThread
         internal static unsafe extern bool ResumeThread(
 IntPtr hThread
 );
+        // Code concerning .NET internal implementation; should not be tampered with.
         internal unsafe static byte* GetInternalCPPThreadObject(Thread instance)
         {
-            // offset of "DONT_USE_InternalThread" in the .NET thread object
-            // .net 5; C++ instance at 5 * sizeof(IntPtr) + sizeof(IntPtr)
-            // .net 6+;  C++ instance at 4 * sizeof(IntPtr) + sizeof(IntPtr)
-            // CLR 4; C++ instance at 7 * sizeof(IntPtr) + sizeof(IntPtr)
-            // CLR 2; C++ instance at 9 * sizeof(IntPtr) + sizeof(IntPtr)
+            // internal field offsets of "DONT_USE_InternalThread" in the .NET object containing the C++ object on each .NET runtime versions and architecture
+            // these offsets are calculated and relative to the complex way .NET handles the field layout of an object; should not be practiced
+            // .net 5; C++ instance located at *the address of the instance + the object header + 5 of pointer or reference sized units (5 * sizeof(IntPtr) + sizeof(IntPtr)); no padding is applied
+            // .net 6+; starting with .NET 6, C++ instance located at *the address of the instance + the object header + 4 of pointer or reference sized units (4 * sizeof(IntPtr) + sizeof(IntPtr)); no padding is applied
+            // On .NET framework, that fallows accordingly:
+            // CLR 4; C++ instance located at *the address of the instance + the object header + 7 of pointer or reference sized units (7 * sizeof(IntPtr) + sizeof(IntPtr)); no padding is applied
+            // CLR 2; C++ instance located at *the address of the instance + the object header + 9 of pointer or reference sized units (9 * sizeof(IntPtr) + sizeof(IntPtr)); no padding is applied
 #if NET5_0
           
          return *(byte**)(*(byte**)&instance + 6 * sizeof(void*));
@@ -367,12 +388,13 @@ IntPtr hThread
             return *(byte**)(*(byte**)&instance + 8 * sizeof(void*));
 #elif NET20_OR_GREATER
             return *(byte**)(*(byte**)&instance + 10 * sizeof(void*));
- 
+
 #endif
 
         }
+        [Obsolete("The DotNetAbort and ResetAbort 'may corrupt the process and should not be used in production code.\r\nOn .NET 5 and .NET 6, this method is experimental and might induce unexpected behavior such as throwing a random exception just before the ThreadAbortException which requires extra exception handling.", false)]
 
-        public static void ResetAbort()
+        public static void ResetAbort(Thread instance = null)
         {
 #if NET8_0_OR_GREATER
             if (isAOT)
@@ -382,11 +404,9 @@ IntPtr hThread
 
             }
 #endif
-            Thread instance = Thread.CurrentThread;
-            if ((instance.ThreadState & (ThreadState.AbortRequested | ThreadState.Aborted)) < ThreadState.AbortRequested)
-                return;
-            for (; (instance.GetNativeThreadState() & NETInternalThreadState.TS_AbortInitiated) == 0;) ;
-            instance.SetThreadState(ThreadState.Running);
+            if (instance == null)
+                instance = Thread.CurrentThread;
+            instance.ResetAbort();
 
         }
     }
