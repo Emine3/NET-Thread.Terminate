@@ -1,4 +1,4 @@
-[![NuGet](https://img.shields.io/nuget/v/NET-Thread.Terminate.svg)](https://www.nuget.org/packages/NET-Thread.Terminate/)**.NET Thread.Terminate 1.0.5**
+******.NET Thread.Terminate 1.0.5****** [![NuGet](https://img.shields.io/nuget/v/NET-Thread.Terminate.svg)](https://www.nuget.org/packages/NET-Thread.Terminate/)
 
 ## Introduction
 ".NET Thread.Terminate" is a partial implementation of a bigger project [Untitled](https://github.com/Emine3/Untitled) under development. It offers capability to perform native operations such as termination on any managed threads on both .NET and .NET Framework. This project serves as a proof of concept demonstrating the power of the upcoming project.
@@ -6,8 +6,6 @@
 ## .NET threads: a managed wrapper
 Obtaining the handle of the relative native thread makes this possible; however, none of .NET runtimes offers an option to expose the native handle to the created thread; instead we're left with a managed thread ID that essentially serves as a number to distinguish between our instantiated managed threads: ultimately a Thread instance in C# is not a real native thread and only relevant to the managed context, right? Not quite right! The Thread class can be concisely explained as a managed wrapper around a C++ object containing the handle of the created native thread by the runtime; that "C++ object" is preserved in a field named "DONT_USE_InternalThread" we have no business even looking at as suggested by the name 🙂 This field represents the internally instantiated C++ object.
  
-
-
 The thread's handle is assigned to the field "m_ThreadHandleForClose" which preserves the handle to the created thread by CreateThread called by .NET internals, and there is this other important field "m_state" which's the internal version of ThreadState (especially useful for properties such as IsAlive). Now, were we to access the C++ object in "DONT_USE_InternalThread" and calculate the offset of these two fields for all different .NET versions, we could obtain the OS handle to that "native thread" and make calling native Windows API functions on any targeted managed threads possible; having access to these two fields also gives us so much power such as restoration of Abort and Suspend methods on .NET Framework; these offsets have been tested against each supported runtime in Section [Compatibility](#Compatibility); however, over the time, there is no guarantee, these offsets stay relevant and correct (read [Additional Information](#Additional-Information) Section).
 
 
@@ -20,23 +18,23 @@ You can also install the NuGet package by using the dotnet CLI:
 dotnet add package NET-Thread.Terminate
 ```
 
-## <center>How to use</center>
+## How to use
 .NET Terminate is easy to use: it adds extension methods to the Thread class so you could call them like you would do any other methods on your Thread object. These methods are, also, defined and available in System.Threading.NativeThreadExtensions.
 
 > [!CAUTION]
 > Calling 'ThreadTerminate' on a thread might cause corruption in the runtime and lead to resource leakage, unreleased locks, critical points of the code unreached, and potentially, affecting the rest of the application's behavior. Do not use this method in production code.
 
-### <center>1. Terminate</center>
+### 1. Terminate
 ```csharp
 SomeThread.Terminate(ExitCode = 0);
 ```
 Terminates the thread immediately on the low level by calling the Windows API TerminateThread on its native handle. This method is intended to be tested and tried conceptually in advanced scenarios that concern debugging needs and should be avoided in production code as it is extremely dangerous; a thread stuck at a p/invoke call (in the preemptive mode) or troublesome threads created in a third-party library are rare phenomenons that shouldn't occur in a production environment in the first place: your code shouldn't ever reach the point that causes loss of control of your thread in an ideal production ready app; when that happens, you'll lose every safety benefit a managed language offers and should reconsider techniques or approaches you've implemented. 
 
-[GIF 1](https://github.com/Emine3/NET-Thread.Terminate/blob/main/Assets/Homelander.gif)
+![GIF 1](https://raw.githubusercontent.com/Emine3/NET-Thread.Terminate/refs/heads/main/Assets/Homelander.gif)
 
 To end a thread in any production code, use cooperative cancellation such as [CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken).
 
-![Reading a file using a created Thread stuck at calling a native function](https://github.com/Emine3/NET-Thread.Terminate/blob/main/Assets/Thread.Terminate%20Instance.png)
+![Reading a file using a created Thread stuck at calling a native function](https://raw.githubusercontent.com/Emine3/NET-Thread.Terminate/refs/heads/main/Assets/Thread.Terminate%20Instance.png)
 
 > [!CAUTION]
 > The DotNetAbort method 'may corrupt the process and should not be used in production code.'
@@ -44,7 +42,7 @@ To end a thread in any production code, use cooperative cancellation such as [Ca
 > [!warning]
 > This method requires special exception handling on .NET 5 and .NET 6
 
-### <center>2. DotNetAbort <center>
+### 2. DotNetAbort 
 ```csharp
 SomeThread.DotNetAbort();
 ```
@@ -55,7 +53,7 @@ To reset the thread abortion, the extension method ThreadAbort should be called 
 This method works on all .NET versions starting with .NET 5. On .NET 5 and .NET 6, it works by changing the internal thread state to request the runtime to abort the thread; starting with .NET 7, it just falls back to DotNetAbortInternal because it's more stable.
 
 
-[^1]: There is a catch you should absolutely consider and take into account when aborting the thread on .NET 5 and .NET 6 using this method: a random exception might be thrown at the thread before the main ThreadAbortException exception; this possible case must be handled like the code below:
+There is a catch you should absolutely consider and take into account when aborting the thread on .NET 5 and .NET 6 using this method: a random exception might be thrown at the thread before the main ThreadAbortException exception; this possible case must be handled like the code below:
 
 ```csharp
   Thread SomeThread = new Thread(() =>
@@ -103,7 +101,7 @@ However, this is not necessary and relevant on .NET 7+ since it just falls back 
 > [!CAUTION]
 > The DotNetAbortInternal method 'may corrupt the process and should not be used in production code.'
 
-### <center>3. DotNetAbortInternal <center>
+### 3. DotNetAbortInternal 
 ```csharp
 SomeThread.DotNetAbortInternal();
 ```
@@ -112,7 +110,7 @@ Aborts the thread in the same style as the Abort method on .NET Framework; analo
 ControlledExecution was introduced on .NET 7 which would allow you to run a piece of code and abort it; to do that, it implements a p/Invoke declaration responsible for aborting the thread; that declaration is used to abort the thread. On .NET platforms older than .NET 7, it falls back to DotNetAbort.
 
 
-### <center>4. ResetAbort <center>
+### 4. ResetAbort 
 ```csharp
 SomeThread.ResetAbort();
 ```
@@ -124,7 +122,7 @@ Applies the same mechanism as the documented static method Thread.ResetAbort to 
 > [!CAUTION]
 > Calling 'SuspendNative' on a thread might cause corruption in the runtime and lead to resource leakage, unreleased locks, critical points of the code unreached, and potentially, affecting the rest of the application's behavior. Do not use this method in production code.
 
-### <center>5. SuspendNative <center>
+### 5. SuspendNative 
 ```csharp
 SomeThread.SuspendNative();
 ```
@@ -132,14 +130,14 @@ Suspends the thread on the low level by calling the Windows API SuspendThread on
 
 
 
-### <center>6. ResumeNative <center>
+### 6. ResumeNative 
 ```csharp
 SomeThread.ResumeNative();
 ```
 Resumes the suspended thread by calling the Windows API ResumeThread on its native handle. Not to be confused with the Resume method on .NET Framework. Do not adopt using this method unless you have a good reason.
 
 
-### <center>7. GetNativeHandle <center>
+### 7. GetNativeHandle 
 ```csharp
 SomeThread.GetNativeHandle();
 ```
@@ -147,10 +145,10 @@ Returns the handle to the native thread associated with the managed thread objec
 
 
 
-****<center>Utility Class</center>****
+****Utility Class****
 A class containing some methods or fields that might come in handy; the class is defined under the NativeThreadExtension namespace.
 
-### <center>⭐1. CheckCompatibilityatRuntime <center>
+### ⭐1. CheckCompatibilityatRuntime 
 ```csharp
 Utility.CheckCompatibilityatRuntime = false;
 ```
@@ -158,7 +156,7 @@ Determines whether the runtime version of the imported library matches the runni
 
 This method is supported on all .NET and .NET Framework versions.
 
-### <center>2. GetRuntimeVersion <center>
+### 2. GetRuntimeVersion 
 ```csharp
       DotNetPlatform Platform = Utility.GetRuntimeVersion();
       if((Platform & DotNetPlatform.CLR) != 0)
@@ -203,18 +201,18 @@ Returns an Enum with the type of Utility.DotNetPlatform representing the .NET ru
 
 
 
-### <center>3. GetRuntimeVersionString<center>
+### 3. GetRuntimeVersionString
 ```csharp
  Console.WriteLine($"Running on {Utility.GetRuntimeVersionString(Utility.GetRuntimeVersion(), IncludeRuntimeVersion = true)}");
 ```
 Returns a string representation of the Enum value returned by GetRuntimeVersion.
 
 
-### <center>4. GetNativeThreadState<center>
+### 4. GetNativeThreadState
 
 Returns the internal thread state. This method is preserved for advanced scenarios. Do not use without intention to change or read internal material with adequate CLR internal knowledge.
 
-### <center>5. SetNativeThreadState<center>
+### 5. SetNativeThreadState
 
 Sets the internal thread state. This method is preserved for advanced scenarios. Do not use without intention to change or read internal material with adequate CLR internal knowledge.
 
@@ -229,8 +227,8 @@ Sets the internal thread state. This method is preserved for advanced scenarios.
 | `.NET 9` | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | `.NET 8` | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | `.NET 7` | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
-| `.NET 6` | ✔️ | ✔️ | ✔️ | ✔️[^1] | ✔️ | ✔️ | ✔️[^1] | 
-| `.NET 5` | ✔️ | ✔️ | ✔️ | ✔️[^1] | ✔️ | ✔️ | ✔️[^1] |
+| `.NET 6` | ✔️ | ✔️ | ✔️ | [✔️](#2-dotnetabort) | ✔️ | ✔️ | [✔️](#2-dotnetabort) | 
+| `.NET 5` | ✔️ | ✔️ | ✔️ | [✔️](#2-dotnetabort) | ✔️ | ✔️ | [✔️](#2-dotnetabort) |
 | `.NET Framework 2.x– 4.8.1` | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | `NativeAOT` | ✔️ | ✔️ | ✔️ | ❌ | ✔️ | ✔️ | ❌ |
 | `.NET Framework 1.x` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -246,4 +244,4 @@ Some important information regarding the internal thread implementation that des
 * **DotNetAbort** is not supported on NativeAOT. NativeAOT does not benefit from the internal runtime implementation handling thread "gradual" abortion requests and throwing a `ThreadAbortException` exception at the GC safe points since the concept doesn't exist on the Native level.
 
 
-* On .NET Framework, the address to the native handle in the C++ object mentioned only differs by the CLR version: CLR 2.x and CLR 4.x. All .NET Frameworks, hence are supported with an exception of .NET Framework versions older than 2. Notwithstanding, starting with .NET 5, that is not the case anymore since each .NET version has its separate runtime with different offsets. So if you use this project on .NET 5+, you should update the package and check if the newly released .NET is supported. The right for .NET team to change the field orders are reserved so always ensure your production-ready app doesn't relay on this project.
+* On .NET Framework, the address to the native handle in the C++ object mentioned only differs by the CLR version: CLR 2.x and CLR 4.x. All .NET Frameworks, hence are supported with an exception of .NET Framework versions older than 2. Notwithstanding, starting with .NET 5, that is not the case anymore since each .NET version has its separate runtime with different offsets. So if you use this project on .NET 5+, you should update the package and check if the newly released .NET is supported.
